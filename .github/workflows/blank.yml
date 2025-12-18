@@ -60,6 +60,28 @@ jobs:
             echo "android/app/build.gradle not found, skipping minSdkVersion patch"
           fi
 
+      - name: Disable R8 minify/shrink in release
+        run: |
+          FILE=android/app/build.gradle
+          if [ -f "$FILE" ]; then
+            echo "Patching $FILE to disable R8 minify/shrink..."
+            # Force set to false if present
+            sed -i 's/minifyEnabled[[:space:]]\+true/minifyEnabled false/g' "$FILE" || true
+            sed -i 's/shrinkResources[[:space:]]\+true/shrinkResources false/g' "$FILE" || true
+            # Inject into release block if missing
+            if ! grep -q "minifyEnabled" "$FILE"; then
+              awk '
+                BEGIN{inbt=0; inrel=0}
+                /buildTypes[[:space:]]*\{/ {inbt=1}
+                inbt && /release[[:space:]]*\{/ {print; print "            minifyEnabled false"; print "            shrinkResources false"; skip=1; next}
+                {print}
+              ' "$FILE" > "$FILE.tmp" && mv "$FILE.tmp" "$FILE"
+            fi
+            echo "R8 minify/shrink disabled in release."
+          else
+            echo "$FILE not found, skipping R8 patch"
+          fi
+
       # 3. Добавляем разрешения INTERNET и CAMERA.
       # Используем разделитель '|' вместо '/', так как внутри тега есть '/'
       - name: Add Internet and Camera Permissions
