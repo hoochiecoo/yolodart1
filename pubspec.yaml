@@ -10,6 +10,7 @@ dependencies:
   flutter:
     sdk: flutter
   webview_flutter: ^4.7.0
+  ultralytics_yolo: ^0.1.26
 
 dev_dependencies:
   flutter_test:
