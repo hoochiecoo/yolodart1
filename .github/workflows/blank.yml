@@ -24,8 +24,8 @@ jobs:
           cache: true
 
       # 1. Генерируем нативные файлы Android
-      - name: Generate Android Project
-        run: flutter create . --project-name=yolo_ci_app --org com.bowl.bowl --platforms=android --overwrite
+      - name: Generate Android Project (do not overwrite existing Dart code)
+        run: flutter create . --project-name=yolo_ci_app --org com.bowl.bowl --platforms=android
 
       - name: Debug Android folder
         run: |
@@ -33,6 +33,22 @@ jobs:
           ls -la android || true
           echo "Listing android/app directory:" 
           ls -la android/app || true
+
+      - name: Validate entrypoint is not default counter app
+        run: |
+          echo "Validating lib/main.dart..."
+          test -f lib/main.dart || (echo "lib/main.dart is missing" && exit 1)
+          if grep -qi "you have pushed the button" lib/main.dart; then
+            echo "ERROR: Detected default Flutter counter template in lib/main.dart";
+            echo "This repository should use custom MainApp with WebView/YOLO.";
+            exit 1;
+          fi
+          # Also ensure our expected widgets are referenced
+          if ! grep -q "class MainApp" lib/main.dart; then
+            echo "ERROR: class MainApp not found in lib/main.dart"; exit 1; fi
+          if ! grep -q "WebView" lib/main.dart; then
+            echo "ERROR: WebView not referenced in lib/main.dart"; exit 1; fi
+          echo "Validation passed."
 
       # 2. Исправляем minSdkVersion (заменяем всю строку на жестко заданную версию 21)
       - name: Fix minSdkVersion in build.gradle
