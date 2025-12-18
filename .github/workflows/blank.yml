@@ -25,20 +25,35 @@ jobs:
 
       # 1. Генерируем нативные файлы Android
       - name: Generate Android Project
-        run: flutter create . --project-name=yolo_ci_app --org com.bowl.bowl
+        run: flutter create . --project-name=yolo_ci_app --org com.bowl.bowl --platforms=android --overwrite
+
+      - name: Debug Android folder
+        run: |
+          echo "Listing android directory after flutter create:" 
+          ls -la android || true
+          echo "Listing android/app directory:" 
+          ls -la android/app || true
 
       # 2. Исправляем minSdkVersion (заменяем всю строку на жестко заданную версию 21)
       - name: Fix minSdkVersion in build.gradle
         run: |
-          sed -i 's|minSdkVersion .*|minSdkVersion 21|g' android/app/build.gradle
-          echo "Patched minSdkVersion to 21"
+          if [ -f android/app/build.gradle ]; then
+            sed -i 's|minSdkVersion .*|minSdkVersion 21|g' android/app/build.gradle || true
+            echo "Patched minSdkVersion to 21"
+          else
+            echo "android/app/build.gradle not found, skipping minSdkVersion patch"
+          fi
 
       # 3. ИСПРАВЛЕНО: Добавляем разрешение INTERNET.
       # Используем разделитель '|' вместо '/', так как внутри тега есть '/'
       - name: Add Internet Permission
         run: |
-          sed -i 's|<application|<uses-permission android:name="android.permission.INTERNET"/>\n    <application|g' android/app/src/main/AndroidManifest.xml
-          echo "Injected Internet Permission into AndroidManifest"
+          if [ -f android/app/src/main/AndroidManifest.xml ]; then
+            sed -i 's|<application|<uses-permission android:name="android.permission.INTERNET"/>\n    <application|g' android/app/src/main/AndroidManifest.xml || true
+            echo "Injected Internet Permission into AndroidManifest"
+          else
+            echo "AndroidManifest.xml not found, skipping permission injection"
+          fi
 
       - name: Get Dependencies
         run: flutter pub get
