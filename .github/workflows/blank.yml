@@ -44,15 +44,30 @@ jobs:
             echo "android/app/build.gradle not found, skipping minSdkVersion patch"
           fi
 
-      # 3. ИСПРАВЛЕНО: Добавляем разрешение INTERNET.
+      # 3. Добавляем разрешения INTERNET и CAMERA.
       # Используем разделитель '|' вместо '/', так как внутри тега есть '/'
-      - name: Add Internet Permission
+      - name: Add Internet and Camera Permissions
         run: |
           if [ -f android/app/src/main/AndroidManifest.xml ]; then
-            sed -i 's|<application|<uses-permission android:name="android.permission.INTERNET"/>\n    <application|g' android/app/src/main/AndroidManifest.xml || true
-            echo "Injected Internet Permission into AndroidManifest"
+            # INTERNET
+            sed -i '0,/<application/s//<uses-permission android:name="android.permission.INTERNET"/>\n    &/' android/app/src/main/AndroidManifest.xml || true
+            # CAMERA
+            sed -i '0,/<application/s//<uses-permission android:name="android.permission.CAMERA"/>\n    &/' android/app/src/main/AndroidManifest.xml || true
+            # Optionally add camera feature (not required but recommended)
+            grep -q "android.hardware.camera.any" android/app/src/main/AndroidManifest.xml || sed -i '0,/<application/s//<uses-feature android:name="android.hardware.camera.any" android:required="false"\/>\n    &/' android/app/src/main/AndroidManifest.xml || true
+            echo "Injected INTERNET and CAMERA permissions into AndroidManifest"
           else
             echo "AndroidManifest.xml not found, skipping permission injection"
+          fi
+
+      # iOS: add NSCameraUsageDescription if Info.plist exists (CI may not build iOS on ubuntu)
+      - name: Add iOS Camera Usage Description
+        run: |
+          if [ -f ios/Runner/Info.plist ]; then
+            PlistBuddy -c 'Add :NSCameraUsageDescription string "Camera access is required for object detection"' ios/Runner/Info.plist || true
+            echo "Inserted NSCameraUsageDescription into Info.plist"
+          else
+            echo "Info.plist not found, skipping iOS camera usage description"
           fi
 
       - name: Get Dependencies

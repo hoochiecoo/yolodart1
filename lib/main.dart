@@ -1,11 +1,43 @@
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import 'package:ultralytics_yolo/ultralytics_yolo.dart';
 
 void main() {
   runApp(const MaterialApp(
     debugShowCheckedModeBanner: false,
-    home: WebViewApp(),
+    home: MainApp(),
   ));
+}
+
+class MainApp extends StatefulWidget {
+  const MainApp({super.key});
+
+  @override
+  State<MainApp> createState() => _MainAppState();
+}
+
+class _MainAppState extends State<MainApp> {
+  int _index = 0;
+
+  final pages = const [
+    WebViewApp(),
+    YoloCameraPage(),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: pages[_index],
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _index,
+        onDestinationSelected: (i) => setState(() => _index = i),
+        destinations: const [
+          NavigationDestination(icon: Icon(Icons.public), label: 'Web'),
+          NavigationDestination(icon: Icon(Icons.camera_alt), label: 'Camera'),
+        ],
+      ),
+    );
+  }
 }
 
 class WebViewApp extends StatefulWidget {
@@ -50,10 +82,27 @@ class _WebViewAppState extends State<WebViewApp> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      // SafeArea убрали снизу, чтобы сайт выглядел более нативно
-      body: SafeArea(
-        child: WebViewWidget(controller: controller),
+    return SafeArea(
+      child: WebViewWidget(controller: controller),
+    );
+  }
+}
+
+class YoloCameraPage extends StatelessWidget {
+  const YoloCameraPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: YOLOView(
+        modelPath: 'yolo11n',
+        task: YOLOTask.detect,
+        onResult: (results) {
+          debugPrint('Found ${results.length} objects!');
+          for (final result in results) {
+            debugPrint('${result.className}: ${result.confidence}');
+          }
+        },
       ),
     );
   }
