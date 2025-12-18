@@ -26,7 +26,7 @@ jobs:
 
       # 1. Генерируем нативные файлы Android
       - name: Generate Android Project
-        run: flutter create . --project-name=webview_ci_app --org com.bowlmates.app
+        run: flutter create . --project-name=yolo_ci_app --org com.bowl.bowl
 
       # 2. Исправляем minSdkVersion (заменяем всю строку на жестко заданную версию 21)
       - name: Fix minSdkVersion in build.gradle
