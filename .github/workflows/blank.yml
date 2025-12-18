@@ -21,7 +21,6 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          flutter-version: '3.19.0'
           cache: true
 
       # 1. Генерируем нативные файлы Android
@@ -43,6 +42,16 @@ jobs:
 
       - name: Get Dependencies
         run: flutter pub get
+
+      - name: Check dependency updates
+        run: |
+          flutter pub outdated --no-transitive > pub_outdated.txt || true
+
+      - name: Upload dependency report
+        uses: actions/upload-artifact@v4
+        with:
+          name: pub-outdated-report
+          path: pub_outdated.txt
 
       - name: Build APK
         run: flutter build apk --release --no-tree-shake-icons
